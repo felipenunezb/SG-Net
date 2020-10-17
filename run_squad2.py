@@ -259,7 +259,7 @@ def read_squad_examples(input_file, input_tag_file, is_training):
                 span_doc = dqtag["span_doc"]
                 head_doc = dqtag["head_doc"]
                 type_doc = dqtag["type_doc"]
-                assert len(span_doc) == len(head_doc) == len(type_doc) == cnt_token, print(qas_id)
+                assert len(span_doc) == len(head_doc) == len(type_doc) == cnt_token, qas_id
                 # reconstruct into sentences
                 new_span_doc = []
                 new_head_doc = []
@@ -306,7 +306,6 @@ def read_squad_examples(input_file, input_tag_file, is_training):
                         if actual_text.find(cleaned_answer_text) == -1:
                             logger.warning("Could not find answer: '%s' vs. '%s'",
                                            actual_text, cleaned_answer_text)
-                            print(qas_id)
                             continue
                     else:
                         start_position = -1
