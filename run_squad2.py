@@ -259,7 +259,7 @@ def read_squad_examples(input_file, input_tag_file, is_training):
                 span_doc = dqtag["span_doc"]
                 head_doc = dqtag["head_doc"]
                 type_doc = dqtag["type_doc"]
-                assert len(span_doc) == len(head_doc) == len(type_doc) == cnt_token, qas_id
+                #assert len(span_doc) == len(head_doc) == len(type_doc) == cnt_token, qas_id
                 # reconstruct into sentences
                 new_span_doc = []
                 new_head_doc = []
