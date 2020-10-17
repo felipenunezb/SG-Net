@@ -156,7 +156,7 @@ def read_squad_examples(input_file, input_tag_file, is_training):
     with open(input_file, "r", encoding='utf-8') as reader:
         source = json.load(reader)
         input_data = source["data"]
-        version = source["version"]
+        version = "v2.0" #source["version"]
     input_tag_data = []
 
     with open(input_tag_file, "r", encoding='utf-8') as reader:
