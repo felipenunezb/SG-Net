@@ -1399,6 +1399,99 @@ class BertForQuestionAnsweringSpanMask(BertPreTrainedModel):
         else:
             return start_logits, end_logits
 
+        
+class BertForQuestionAnsweringSpanMask_MultiVote(BertPreTrainedModel):
+    """BERT model for Question Answering (span extraction).
+    This module is composed of the BERT model with a linear layer on top of
+    the sequence output that computes start_logits and end_logits
+
+    Example usage:
+    ```python
+    # Already been converted into WordPiece token ids
+    input_ids = torch.LongTensor([[31, 51, 99], [15, 5, 0]])
+    input_mask = torch.LongTensor([[1, 1, 1], [1, 1, 0]])
+    token_type_ids = torch.LongTensor([[0, 0, 1], [0, 2, 0]])
+
+    config = BertConfig(vocab_size=32000, hidden_size=512,
+        num_hidden_layers=8, num_attention_heads=6, intermediate_size=1024)
+
+    model = BertForQuestionAnswering(config)
+    start_logits, end_logits = model(input_ids, token_type_ids, input_mask)
+    ```
+    """
+
+    def __init__(self, config):
+        super(BertForQuestionAnsweringSpanMask, self).__init__(config)
+        self.bert = BertModel(config)
+        self.span_layer = BertLayer(config)
+        self.w = nn.Parameter(torch.Tensor([0.5, 0.5]))
+        self.num_choices = 2913  #VG   #1834  #GQA
+
+        self.gamma = nn.Parameter(torch.ones(1))
+        self.dropout = nn.Dropout(0.3)
+        self.qa_outputs = nn.Linear(config.hidden_size, 2)
+        self.orig_ans_choice = nn.Sequential(nn.Dropout(0.1), nn.Linear(4*config.hidden_size, self.num_choices))
+
+        self.apply(self.init_bert_weights)
+
+    def forward(self, input_ids, token_type_ids=None, attention_mask=None, input_span_mask=None,
+                start_positions=None, end_positions=None, is_impossibles=None, orig_answers=None, titles=None,):
+        bert_output, _ = self.bert(input_ids, token_type_ids, attention_mask,
+                                   output_all_encoded_layers=False)
+
+        # span_attention_mask
+        extended_span_attention_mask = input_span_mask.unsqueeze(1)
+        extended_span_attention_mask = extended_span_attention_mask.to(
+            dtype=next(self.parameters()).dtype)  # fp16 compatibility
+        extended_span_attention_mask = (1.0 - extended_span_attention_mask) * -10000.0
+
+        span_sequence_output = self.span_layer(bert_output, extended_span_attention_mask)
+
+        w = F.softmax(self.w)
+        sequence_output = self.gamma * (w[0] * bert_output + w[1] * span_sequence_output)
+       
+        logits = self.qa_outputs(sequence_output)
+        start_logits, end_logits = logits.split(1, dim=-1)
+        start_logits = start_logits.squeeze(-1)
+        end_logits = end_logits.squeeze(-1)
+        
+        #Voters
+        #Voter 1
+        voter_1 = torch.mean(bert_output,dim=1)
+        #Voter 2
+        voter_2 = torch.mean(span_sequence_output,dim=1)
+        #Voter 3
+        voter_3 = torch.mean(sequence_output, dim=1)
+        #voter 4
+        voter_4 = torch.max(voter_1, voter_2)
+        
+        sequence_mean = torch.cat((voter_1, voter_2, voter_3, voter_4), dim=1)
+        orig_ans_log = self.orig_ans_choice(sequence_mean)
+
+        if start_positions is not None and end_positions is not None:
+            # If we are on multi-GPU, split add a dimension
+            if len(start_positions.size()) > 1:
+                start_positions = start_positions.squeeze(-1)
+            if len(end_positions.size()) > 1:
+                end_positions = end_positions.squeeze(-1)
+            if len(orig_answers.size()) > 1:
+                orig_answers = orig_answers.squeeze(-1)
+            # sometimes the start/end positions are outside our model inputs, we ignore these terms
+            ignored_index = start_logits.size(1)
+            start_positions.clamp_(0, ignored_index)
+            end_positions.clamp_(0, ignored_index)
+
+            # loss CE
+            loss_fct = CrossEntropyLoss(ignore_index=ignored_index)
+            start_loss = loss_fct(start_logits, start_positions)
+            end_loss = loss_fct(end_logits, end_positions)
+            loss_fct_c = CrossEntropyLoss()
+            choice_loss = loss_fct_c(orig_ans_log, orig_answers)
+            total_loss = (start_loss + end_loss + choice_loss) / 3
+
+            return total_loss
+        else:
+            return start_logits, end_logits, orig_ans_log
 
 class BertForMultipleChoiceSpanMask(BertPreTrainedModel):
     """BERT model for multiple choice tasks.
