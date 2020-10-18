@@ -66,12 +66,15 @@ class SquadExample(object):
                  que_span=None,
                  doc_span=None,
                  token_doc=None,
-                 token_que=None
+                 token_que=None,
+                 title=None,
+                 orig_ans=0
                  ):
         self.qas_id = qas_id
         self.question_text = question_text
         self.doc_tokens = doc_tokens
         self.orig_answer_text = orig_answer_text
+        self.title = title
         self.start_position = start_position
         self.end_position = end_position
         self.is_impossible = is_impossible
@@ -83,6 +86,7 @@ class SquadExample(object):
         self.doc_span = doc_span
         self.token_doc = token_doc
         self.token_que = token_que
+        self.orig_ans = orig_ans
 
     def __str__(self):
         return self.__repr__()
@@ -152,6 +156,22 @@ class SimpleNlp(object):
 
     def nlp(self, text):
         return self.nlp(text)
+      
+def create_dicts(data_dir = None, filename=None):
+    '''
+    Return Answer to ID and ID to Answer dictionaries
+    '''
+    with open(
+        os.path.join(data_dir, "ans_to_ix.json"), "r", encoding="utf-8"
+    ) as reader:
+        ans_to_ix = json.load(reader)
+
+    with open(
+        os.path.join(data_dir, "ix_to_ans.json"), "r", encoding="utf-8"
+    ) as reader:
+        ix_to_ans = json.load(reader)
+
+    return ans_to_ix, ix_to_ans
 
 
 def read_squad_examples(input_file, input_tag_file, is_training):
@@ -188,6 +208,7 @@ def read_squad_examples(input_file, input_tag_file, is_training):
 
     examples = []
     for entry in tqdm(input_data,ncols=50,desc="reading examples:"):
+        title = entry["title"]
         for paragraph in entry["paragraphs"]:
             paragraph_text = paragraph["context"]
 
@@ -290,6 +311,7 @@ def read_squad_examples(input_file, input_tag_file, is_training):
                 if is_training:
                     if version == "v2.0":
                         is_impossible = qa["is_impossible"]
+                        orig_ans = to_ix_dict.get(qa.get("orig_ans", "unknown"), 0)
 
                     if not is_impossible:
                         answer = qa["answers"][0]
@@ -331,7 +353,9 @@ def read_squad_examples(input_file, input_tag_file, is_training):
                     doc_types=new_type_doc,
                     doc_span=new_span_doc,
                     token_doc=dqtag["token_doc"],
-                    token_que=dqtag["token_que"]
+                    token_que=dqtag["token_que"],
+                    orig_ans=orig_ans,
+                    title = title
                 )
                 examples.append(example)
     return examples
@@ -1032,6 +1056,8 @@ def main():
                         help="The output directory where the model checkpoints and predictions will be written.")
 
     ## Other parameters
+    parser.add_argument("--data_dir", default="/content/data/",
+                        type=str, help="Input Data Directory")
     parser.add_argument("--train_file", default="data/squad/squad_sample.json",
                         type=str, help="SQuAD json for training. E.g., train-v1.1.json")
     parser.add_argument("--predict_file", default="data/squad/squad_sample.json",
