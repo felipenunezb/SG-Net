@@ -118,6 +118,8 @@ class InputFeatures(object):
                  start_position=None,
                  end_position=None,
                  is_impossible=None,
+                 orig_ans=None,
+                 title=None,
                  input_span_mask=None):
         self.unique_id = unique_id
         self.example_index = example_index
@@ -131,6 +133,8 @@ class InputFeatures(object):
         self.start_position = start_position
         self.end_position = end_position
         self.is_impossible = is_impossible
+        self.orig_ans = orig_ans
+        self.title = title
         self.input_span_mask = input_span_mask
 
 
@@ -557,6 +561,8 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
             start_position = None
             end_position = None
             is_impossible = example.is_impossible
+            orig_ans = example.orig_ans
+            title = example.title
 
             if is_training and not example.is_impossible:
                 # For training, if our document chunk does not contain an annotation
@@ -599,6 +605,8 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
                     start_position=start_position,
                     end_position=end_position,
                     is_impossible=is_impossible,
+                    orig_ans=orig_ans,
+                    title=title,
                     input_span_mask=record_mask
                 ))
             unique_id += 1
@@ -1231,10 +1239,12 @@ def main():
         all_start_positions = torch.tensor([f.start_position for f in train_features], dtype=torch.long)
         all_end_positions = torch.tensor([f.end_position for f in train_features], dtype=torch.long)
         all_is_impossibles = torch.tensor([int(f.is_impossible) for f in train_features], dtype=torch.long)
+        all_orig_answers = torch.tensor([f.orig_ans for f in features], dtype=torch.long)
+        all_title = torch.tensor([int(f.title) for f in features], dtype=torch.long)
         all_example_index = torch.arange(all_input_ids.size(0), dtype=torch.long)
 
         train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids,
-                                   all_start_positions, all_end_positions, all_is_impossibles, all_example_index)
+                                   all_start_positions, all_end_positions, all_is_impossibles, all_orig_answers, all_title, all_example_index)
 
         if args.local_rank == -1:
             train_sampler = RandomSampler(train_data)
@@ -1249,7 +1259,7 @@ def main():
             for step, batch in enumerate(tqdm(train_dataloader, desc="Iteration", ncols=50)):
                 if n_gpu == 1:
                     batch = tuple(t.to(device) for t in batch)  # multi-gpu does scattering it-self
-                input_ids, input_mask, segment_ids, start_positions, end_positions, is_impossibles, example_indices = batch
+                input_ids, input_mask, segment_ids, start_positions, end_positions, is_impossibles, orig_answers, titles, example_indices = batch
 
                 input_span_mask = np.zeros((input_ids.size(0), input_ids.size(1), input_ids.size(1)))
                 for batch_idx, ex_idx in enumerate(example_indices):
@@ -1262,7 +1272,7 @@ def main():
                 input_span_mask = input_span_mask.to(device)
 
                 loss = model(input_ids, segment_ids, input_mask, input_span_mask, start_positions,
-                                                     end_positions, is_impossibles)
+                                                     end_positions, is_impossibles, orig_answers, titles)
                 if n_gpu > 1:
                     loss = loss.mean()  # mean() to average on multi-gpu.
                 if args.gradient_accumulation_steps > 1:
