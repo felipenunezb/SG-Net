@@ -174,7 +174,7 @@ def create_dicts(data_dir = None, filename=None):
     return ans_to_ix, ix_to_ans
 
 
-def read_squad_examples(input_file, input_tag_file, is_training):
+def read_squad_examples(input_file, input_tag_file, is_training, to_ix_dict=ans_to_ix):
     simple_nlp = SimpleNlp()
     """Read a SQuAD json file into a list of SquadExample."""
     with open(input_file, "r", encoding='utf-8') as reader:
@@ -1172,8 +1172,9 @@ def main():
 
     if args.do_train:
         print("reading train...")
+        ans_to_ix, ix_to_ans = create_dicts(args.data_dir)
         train_examples = read_squad_examples(
-            input_file=args.train_file, input_tag_file=args.train_tag_file, is_training=True)
+            input_file=args.train_file, input_tag_file=args.train_tag_file, is_training=True, ans_to_ix)
         num_train_steps = int(
             len(train_examples) / args.train_batch_size / args.gradient_accumulation_steps * args.num_train_epochs)
 
