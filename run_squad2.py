@@ -1175,7 +1175,7 @@ def main():
         print("reading train...")
         ans_to_ix, ix_to_ans = create_dicts(args.data_dir)
         train_examples = read_squad_examples(
-            input_file=args.train_file, input_tag_file=args.train_tag_file, is_training=True, ans_to_ix)
+            input_file=args.train_file, input_tag_file=args.train_tag_file, is_training=True, to_ix_dict=ans_to_ix)
         num_train_steps = int(
             len(train_examples) / args.train_batch_size / args.gradient_accumulation_steps * args.num_train_epochs)
 
