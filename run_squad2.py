@@ -308,6 +308,7 @@ def read_squad_examples(input_file, input_tag_file, is_training, to_ix_dict=ans_
                 end_position = None
                 orig_answer_text = None
                 is_impossible = False
+                orig_ans = None
                 if is_training:
                     if version == "v2.0":
                         is_impossible = qa["is_impossible"]
