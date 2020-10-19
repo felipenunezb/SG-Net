@@ -174,7 +174,7 @@ def create_dicts(data_dir = None, filename=None):
     return ans_to_ix, ix_to_ans
 
 
-def read_squad_examples(input_file, input_tag_file, is_training, to_ix_dict=ans_to_ix):
+def read_squad_examples(input_file, input_tag_file, is_training, to_ix_dict):
     simple_nlp = SimpleNlp()
     """Read a SQuAD json file into a list of SquadExample."""
     with open(input_file, "r", encoding='utf-8') as reader:
