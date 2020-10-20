@@ -189,7 +189,7 @@ def read_squad_examples(input_file, input_tag_file, is_training, to_ix_dict):
 
     qas_id_to_tag_idx_map = {}
     all_dqtag_data = []
-    for idx, tag_data in enumerate(tqdm(input_tag_data,ncols=50),desc="reading squad examples:"):
+    for idx, tag_data in enumerate(tqdm(input_tag_data,ncols=50,desc="reading squad examples:")):
         qas_id = tag_data["qas_id"]
         qas_id_to_tag_idx_map[qas_id] = idx
         tag_rep = tag_data["tag_rep"]
