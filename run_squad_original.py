@@ -1,7 +1,6 @@
 # coding=utf-8
 # Copyright 2018 The Google AI Language Team Authors and The HugginFace Inc. team.
 # Copyright (c) 2018, NVIDIA CORPORATION.  All rights reserved.
-#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
@@ -171,12 +170,12 @@ def read_squad_examples(input_file, input_tag_file, is_training):
         tag_rep = tag_data["tag_rep"]
         dqtag_data = {
             "qas_id": qas_id,
-            "head_que": [int(i) for i in tag_rep["pred_head_que"]],
+            #"head_que": [int(i) for i in tag_rep["pred_head_que"]],
             "span_que": [eval(i) for i in tag_rep["hpsg_list_que"]],
-            "type_que": tag_rep["pred_type_que"],
+            #"type_que": tag_rep["pred_type_que"],
             "span_doc": [eval(i) for sen_span in tag_rep["hpsg_list_doc"] for i in sen_span],
-            "type_doc": [i for sen in tag_rep["pred_type_doc"] for i in sen],
-            "head_doc": [int(i) for sen_head in tag_rep["pred_head_doc"] for i in sen_head],
+            #"type_doc": [i for sen in tag_rep["pred_type_doc"] for i in sen],
+            #"head_doc": [int(i) for sen_head in tag_rep["pred_head_doc"] for i in sen_head],
             "token_doc": [token for sen_token in tag_rep['doc_tokens'] for token in sen_token],
             "token_que": tag_rep['que_tokens']
         }
@@ -257,8 +256,8 @@ def read_squad_examples(input_file, input_tag_file, is_training):
                 assert dqtag["qas_id"] == qas_id
 
                 span_doc = dqtag["span_doc"]
-                head_doc = dqtag["head_doc"]
-                type_doc = dqtag["type_doc"]
+                #head_doc = dqtag["head_doc"]
+                #type_doc = dqtag["type_doc"]
                 #assert len(span_doc) == len(head_doc) == len(type_doc) == cnt_token, qas_id
                 # reconstruct into sentences
                 new_span_doc = []
@@ -267,16 +266,16 @@ def read_squad_examples(input_file, input_tag_file, is_training):
                 cnt = 0
                 for sent_tokens in new_sen_list:
                     new_span_sen = []
-                    new_head_sen = []
-                    new_type_sen = []
+                    #new_head_sen = []
+                    #new_type_sen = []
                     for _ in sent_tokens:
                         new_span_sen.append(span_doc[cnt])
-                        new_head_sen.append(head_doc[cnt])
-                        new_type_sen.append(type_doc[cnt])
+                        #new_head_sen.append(head_doc[cnt])
+                        #new_type_sen.append(type_doc[cnt])
                         cnt += 1
                     new_span_doc.append(new_span_sen)
-                    new_head_doc.append(new_head_sen)
-                    new_type_doc.append(new_type_sen)
+                    #new_head_doc.append(new_head_sen)
+                    #new_type_doc.append(new_type_sen)
 
                 question_text = qa["question"]
                 start_position = None
@@ -320,11 +319,11 @@ def read_squad_examples(input_file, input_tag_file, is_training):
                     start_position=start_position,
                     end_position=end_position,
                     is_impossible=is_impossible,
-                    que_heads=dqtag["head_que"],
-                    que_types=dqtag["type_que"],
+                    que_heads=None, #dqtag["head_que"],
+                    que_types=None, #dqtag["type_que"],
                     que_span=dqtag["span_que"],
-                    doc_heads=new_head_doc,
-                    doc_types=new_type_doc,
+                    doc_heads=None, #new_head_doc,
+                    doc_types=None, #new_type_doc,
                     doc_span=new_span_doc,
                     token_doc=dqtag["token_doc"],
                     token_que=dqtag["token_que"]
