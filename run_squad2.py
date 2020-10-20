@@ -1267,8 +1267,8 @@ def main():
         all_start_positions = torch.tensor([f.start_position for f in train_features], dtype=torch.long)
         all_end_positions = torch.tensor([f.end_position for f in train_features], dtype=torch.long)
         all_is_impossibles = torch.tensor([int(f.is_impossible) for f in train_features], dtype=torch.long)
-        all_orig_answers = torch.tensor([f.orig_ans for f in features], dtype=torch.long)
-        all_title = torch.tensor([int(f.title) for f in features], dtype=torch.long)
+        all_orig_answers = torch.tensor([f.orig_ans for f in train_features], dtype=torch.long)
+        all_title = torch.tensor([int(f.title) for f in train_features], dtype=torch.long)
         all_example_index = torch.arange(all_input_ids.size(0), dtype=torch.long)
 
         train_data = TensorDataset(all_input_ids, all_input_mask, all_segment_ids,
