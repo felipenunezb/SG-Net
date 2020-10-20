@@ -189,7 +189,7 @@ def read_squad_examples(input_file, input_tag_file, is_training, to_ix_dict):
 
     qas_id_to_tag_idx_map = {}
     all_dqtag_data = []
-    for idx, tag_data in enumerate(tqdm(input_tag_data,ncols=50)):
+    for idx, tag_data in enumerate(tqdm(input_tag_data,ncols=50),desc="reading squad examples:"):
         qas_id = tag_data["qas_id"]
         qas_id_to_tag_idx_map[qas_id] = idx
         tag_rep = tag_data["tag_rep"]
@@ -369,7 +369,7 @@ def convert_examples_to_features(examples, tokenizer, max_seq_length,
     unique_id = 1000000000
     features = []
     flag = True
-    for (example_index, example) in enumerate(tqdm(examples,ncols=50)):
+    for (example_index, example) in enumerate(tqdm(examples,ncols=50,desc="example to features:")):
         que_span = example.que_span
         org_que_token = example.token_que
         org_doc_token = example.token_doc
